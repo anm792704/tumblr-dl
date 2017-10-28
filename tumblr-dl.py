@@ -1,6 +1,7 @@
 import pytumblr
 from tumblr_keys import *
 from tumblr_url import *
+from pathlib import Path
 
 # Authenticate via OAuth
 client = pytumblr.TumblrRestClient(
@@ -12,9 +13,21 @@ client = pytumblr.TumblrRestClient(
 blogposts = client.posts(blogurl, type='photo')
 
 anz_posts = blogposts.get('total_posts')
-
-f = open('output.txt', 'w')
 print("Total posts:", anz_posts)
+
+
+download_list = "download_list_" + blogurl + ".txt"
+archivelist = "archive_list_" + blogurl + ".txt"
+filehandle_download_list = open(download_list, 'a')
+
+if Path(archivelist).is_file():
+    with open(archivelist, 'r') as filehandle_archivelist_read:
+        archive_links = str(filehandle_archivelist_read.readlines()).strip()
+else:
+    archive_links = ()
+
+filehandle_archivelist = open(archivelist, 'a')
+
 
 start = 0
 steps = 20
@@ -28,8 +41,13 @@ while start < anz_posts:
     for x in range (0, steps):
         anz_pics = len(blogposts.get('posts')[x].get('photos'))
         for y in range (0, anz_pics):
-            pic_url_https = blogposts.get('posts')[x].get('photos')[y].get('original_size').get('url')
-            f.write(pic_url_https.replace('https', 'http') + '\n')
+            pic_url = str(blogposts.get('posts')[x].get('photos')[y].get('original_size').get('url')).replace('https', 'http').strip()
+            if (pic_url not in archive_links):
+                filehandle_download_list.write(pic_url + '\n')
+                filehandle_archivelist.write(pic_url + '\n')
+                print ("URL " + pic_url + " added to download and archive list")
+            else:
+                print ("URL " + pic_url + " already in archive, skip it")
     start = start + steps
     end = end + steps
 
@@ -37,5 +55,9 @@ while start < anz_posts:
         end = anz_posts
         steps = end - start
         print("anz_posts of <" + str(anz_posts) + "> reached, set end to anz_posts, set steps to < " + str(steps) + ">")
-    print ("start: <" + str ( start ) + ">, end: <" + str ( end ) + ">, step: < " + str(steps) + ">")
+    print ("start: <" + str ( start ) + ">, end: <" + str ( end ) + ">, step: <" + str(steps) + ">")
+
+filehandle_archivelist.close()
+filehandle_download_list.close()
+
 
