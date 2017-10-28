@@ -2,3 +2,4 @@ tumblr_keys.py
 tumblr_url.py
 archive_list*.txt
 download_list*.txt
+*.log
